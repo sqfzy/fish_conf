@@ -30,6 +30,8 @@ function note
 
     mkdir -p $note_name/images
     mkdir -p $note_name/bibliography
+    touch $note_name/bibliography/chatgpt.md
+    touch $note_name/bibliography/chatgpt.typ
 
     # 根据笔记类型创建相应的主文件
     if test "$note_type" = "md"
@@ -39,7 +41,11 @@ function note
     end
 
     cd $note_name
-    echo '#set text(font: ("LXGW WenKai Mono", "0xProto"))' > ./main.typ
+    echo '#set text(font: ("LXGW WenKai Mono", "0xProto"))
+#import "@local/common:0.0.1": *
+#show: common.with()
+
+' > ./main.typ
 
 
     echo "Note '$note_name' created successfully!"
