@@ -28,7 +28,7 @@ function note
     end
 
     # 使用 eval set 来解析 getopt 输出的参数
-    eval set -- $options
+    eval set argv $options
 
     set -l note_name ""
     set -l note_type "typ"
@@ -42,7 +42,7 @@ function note
                 set argv $argv[3..-1]
             case "-t" "--type"
                 set -l note_type "$argv[2]"
-                if not string match -q -r "^(md|typ)$" "$note_type"
+                if test "$note_type" != "md" -a "$note_type" != "typ"
                     echo "Error: Invalid note type '$note_type'. Please use 'md' or 'typ'." >&2
                     return 1
                 end
@@ -68,7 +68,7 @@ function note
     end
 
     # 如果note_name以.md或.typ结尾，则认为是single_file
-    if string match -q -r ".*\.(md|typ)$" "$note_name"
+    if string match -q -r ".*\.(md|typ)\$" "$note_name"
         set -l single_file true
         set -l note_type (string split "." -- "$note_name")[2]
         set -l note_name (string split "." -- "$note_name")[1]
@@ -83,7 +83,7 @@ function note
 
     # 确定文件路径
     if test "$single_file" = true
-        set -l note_path "$note_name.$note_type"
+        set note_path "$note_name.$note_type"
 
         # 检查文件是否存在
         if test -f "$note_path"
@@ -94,7 +94,7 @@ function note
         touch "$note_path"
     else
         set -l note_dir_path "$note_name"
-        set -l note_path "$note_dir_path/main.$note_type"
+        set note_path "$note_dir_path/main.$note_type"
 
         # 检查文件夹是否存在
         if test -d "$note_dir_path"

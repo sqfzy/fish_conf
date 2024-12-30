@@ -56,7 +56,7 @@ function pandocgpt
 
     # 使用 pandoc 进行转换
     # tex_math_single_backslash 用于将`\( \)`识别为Math节点，使用`pandoc --list-extensions`可以查看更多扩展
-    pandoc $input_file --from=markdown+tex_math_single_backslash --lua-filter=/home/sqfzy/.config/fish/functions/pandocgpt_filter.lua -o $output_file
+    pandoc $input_file --from=markdown+tex_math_single_backslash --lua-filter="$HOME/.config/fish/functions/pandocgpt_filter.lua" -o $output_file
 
     # 替换 align 和调整列表格式
     convert_format $output_file 

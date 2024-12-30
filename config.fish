@@ -6,3 +6,10 @@ if status is-interactive
     oh-my-posh init fish --config ~/.config/fish/themes/sqfzy.omp.json | source
     . /usr/share/autojump/autojump.fish
 end
+
+alias oldls="ls"
+alias ls="exa"
+alias oldcat="cat"
+alias cat="bat"
+alias oldgrep="grep"
+alias grep="rg"

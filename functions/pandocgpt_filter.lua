@@ -31,15 +31,14 @@ function Header(el)
 	local should_remove_space = false
 
 	function trim_number(el)
-		if
-			-- 去掉"1." "1.1." "一、" "(1)" "(2)"等序号
-				el.text and (el.text:match("^%d[%d%.]*") or el.text:match("^[%d一二三四五六七八九十百千]+、") or el.text:match("^%(%d+%)"))
-		then
+		-- 去掉"1." "1.1." "一、" "(1)" "(2)"等序号
+		el.text = el.text:gsub("^%d[%d%.]*", ""):gsub("^[%d一二三四五六七八九十百千]+、", ""):gsub("^%(%d+%)", "")
+
+		if el.text == "" then
 			should_remove_space = true
-			return {}
-		else
-			return el
 		end
+
+		return el
 	end
 
 	return el:walk({
