@@ -1,3 +1,5 @@
+source $HOME/.config/fish/common.fish
+
 function show_help
     echo
     echo "Usage: notepreview [note_name]"
@@ -11,7 +13,7 @@ end
 
 function notepreview
     # 设置笔记目录路径
-    set notes_dir "$HOME/work_space/notes"
+    set -l notes_dir "$HOME/work_space/notes"
 
     # 检查目录是否存在
     if not test -d $notes_dir
@@ -26,56 +28,63 @@ function notepreview
         return 1
     end
 
-    if test (count $argv) -eq 1 -a $argv[1] = "--help" 
+    if test (count $argv) -eq 1 -a $argv[1] = "--help"
         show_help
         return 0
     end
 
-    set note_path ""
+    set -l note_path
 
     if test (count $argv) -eq 0
-        # 默认使用当前目录下的main.md或main.typ
         if test -f "main.typ"
+            # 这里直接 set note_path，不加 -l
             set note_path "main.typ"
         else if test -f "main.md"
             set note_path "main.md"
         else
             echo "Error: No main.typ or main.md found in current directory" >&2
             return 1
-        end 
-    else if test (string match -q -r ".*\.(md|typ)\$" $argv[1])
-        set note_base_name $argv[1]
-        set note_paths (find $notes_dir -type f -name "$note_base_name")
+        end
+    else
+        if test -f $argv[1]
+            # 用户传入了文件路径
+            set note_path $argv[1]
+        else 
+            # 用户传入了笔记名称，可能是笔记文件名，也可能是笔记文件夹名
+            set -l note_name $argv[1]
+            set -l note_paths (find_md_typ_excluding_main $notes_dir $note_name)
+            if test $status -ne 0
+                return 1
+            end
+            set -l note_paths $note_paths (find $notes_dir -type d -name "$note_name")
 
-        set note_path (switch_note_path $note_base_name $note_paths)
-        if test $status -ne 0
-            return 1
+            set -l note_path_or_note_dir_path (switch_note_path $note_name $note_paths)
+            if test $status -ne 0
+                return 1
+            end
+
+            if test -f "$note_path_or_note_dir_path"
+                set note_path "$note_path_or_note_dir_path"
+            else
+                if test -f "$note_path_or_note_dir_path/main.typ"
+                    set note_path "$note_path_or_note_dir_path/main.typ"
+                else if test -f "$note_path_or_note_dir_path/main.md"
+                    set note_path "$note_path_or_note_dir_path/main.md"
+                else
+                    echo "Error: Note does not contain main.typ or main.md" >&2
+                    return 1
+                end
+            end
         end
     end
 
-    if test -z "$note_path"
-        # 根据用户输入的笔记名称进行查找
-        set note_stem_name $argv[1]
-        set note_dir_paths (find $notes_dir -type d -name "$note_stem_name")
-
-        set note_dir_path (switch_note_path $note_stem_name $note_dir_paths)
-        if test $status -ne 0
-            return 1
-        end
-
-        # 检查主文件
-        if test -f "$note_dir_path/main.typ"
-            set note_path "$note_dir_path/main.typ"
-        else if test -f "$note_dir_path/main.md"
-            set note_path "$note_dir_path/main.md"
-        else
-            echo "Error: Note does not contain main.typ or main.md" >&2
-            return 1
-        end
+    if not set -q note_path
+        echo "Assertion failed: Note path not set" >&2
+        return 1
     end
 
     # 验证文件类型
-    set note_type (string split "." (basename $note_path))[2]
+    set -l note_type (string split "." (basename $note_path))[2]
     if not string match -qr "(md|typ)" $note_type
         echo "Error: Invalid note type. Please use 'md' or 'typ'." >&2
         return 1
@@ -106,15 +115,15 @@ function switch_note_path
                 echo "$i. $paths[$i]" >&2
             end
             echo "Enter the number of the note to preview (default is 1):" >&2
-            read choice
+            read -l choice
 
             # 默认选择第一个
-            if test -z "$choice"
+            if test -z $choice
                 set choice 1
             end
 
             if not string match -qr '^[0-9]+$' -- $choice
-                echo "Error: Invalid input, must be a number" >&2
+                echo "Error: Invalid input '$choice', must be a number" >&2
                 return 1
             end
 
