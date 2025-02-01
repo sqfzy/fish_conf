@@ -38,10 +38,10 @@ function note
     while true
         switch "$argv[1]"
             case "-k" "--keywords"
-                set -l keywords "$argv[2]"
+                set keywords "$argv[2]"
                 set argv $argv[3..-1]
             case "-t" "--type"
-                set -l note_type "$argv[2]"
+                set note_type "$argv[2]"
                 if test "$note_type" != "md" -a "$note_type" != "typ"
                     echo "Error: Invalid note type '$note_type'. Please use 'md' or 'typ'." >&2
                     return 1
@@ -54,12 +54,10 @@ function note
                 # 停止解析选项，剩下的为位置参数
                 set argv $argv[2..-1]
                 break
-            case "*"
-                break
         end
     end
 
-    set -l note_name "$argv[1]"
+    set note_name "$argv[1]"
 
     if not set -q note_name
         echo "Error: Note name is required." >&2
@@ -69,20 +67,20 @@ function note
 
     # 如果note_name以.md或.typ结尾，则认为是single_file
     if string match -q -r ".*\.(md|typ)\$" "$note_name"
-        set -l single_file true
-        set -l note_type (string split "." -- "$note_name")[2]
-        set -l note_name (string split "." -- "$note_name")[1]
+        set single_file true
+        set note_type (string split "." -- "$note_name")[2]
+        set note_name (string split "." -- "$note_name")[1]
     end
 
     # 给关键词加上双引号
+    set -l quoted_keywords ""
     if test -n "$keywords"
-        set -l quoted_keywords (string join "," (for kw in (string split "," -- "$keywords"); echo "\"$kw\""; end))
-    else
-        set -l quoted_keywords ""
+        set quoted_keywords (string join "," (for kw in (string split "," -- "$keywords"); echo "\"$kw\""; end))
     end
 
     # 确定文件路径
-    if test "$single_file" = true
+    set -l note_path ""
+    if test "$single_file" = true 
         set note_path "$note_name.$note_type"
 
         # 检查文件是否存在
